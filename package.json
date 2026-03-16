@@ -1,0 +1,13 @@
+{
+  "name": "mph-ibc-form",
+  "version": "1.0.0",
+  "description": "MPH United IBC Recycling Request Form",
+  "main": "api/submit.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.14",
+    "uuid": "^10.0.0"
+  }
+}

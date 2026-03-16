@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IBC Recycling Request Form – MPH United</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      background: #1F3864;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+    }
+    .page-header h1 { color: #fff; font-size: 1.35rem; font-weight: 600; letter-spacing: 0.02em; }
+
+    .card {
+      max-width: 860px;
+      margin: 36px auto 60px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(31,56,100,0.10);
+      overflow: hidden;
+    }
+
+    .card-title {
+      background: linear-gradient(135deg, #1F3864 0%, #2E5FA3 100%);
+      color: #fff;
+      padding: 28px 36px 22px;
+    }
+    .card-title h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .card-title p  { font-size: 0.875rem; opacity: 0.85; line-height: 1.5; }
+
+    .form-body { padding: 32px 36px; }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #2E5FA3;
+      border-bottom: 2px solid #D6E4F0;
+      padding-bottom: 6px;
+      margin: 28px 0 18px;
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    .grid   { display: grid; gap: 16px; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 2fr 1fr 1fr; }
+    .span-2 { grid-column: span 2; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    label  { font-size: 0.78rem; font-weight: 600; color: #374151; }
+    label .req { color: #d64045; margin-left: 2px; }
+    label .opt { color: #9ca3af; font-weight: 400; font-size: 0.72rem; margin-left: 4px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      height: 40px;
+      padding: 0 12px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #1a1a2e;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #2E5FA3;
+      box-shadow: 0 0 0 3px rgba(46,95,163,0.12);
+    }
+    input::placeholder { color: #9ca3af; }
+
+    /* Container table */
+    .container-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
+    .container-table thead tr { background: #1F3864; color: #fff; }
+    .container-table thead th { padding: 10px; text-align: left; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.04em; }
+    .container-table tbody tr { border-bottom: 1px solid #e5eaf2; }
+    .container-table tbody tr:nth-child(even) { background: #f7fafd; }
+    .container-table tbody td { padding: 8px 6px; vertical-align: middle; }
+    .container-table input, .container-table select { height: 34px; font-size: 0.82rem; padding: 0 8px; }
+    .row-num { font-weight: 700; color: #2E5FA3; width: 28px; text-align: center; }
+
+    .add-row-btn {
+      margin-top: 10px;
+      background: none;
+      border: 1.5px dashed #2E5FA3;
+      color: #2E5FA3;
+      padding: 7px 18px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .add-row-btn:hover { background: #D6E4F0; }
+    .remove-row-btn {
+      background: none; border: none; color: #9ca3af;
+      font-size: 1rem; cursor: pointer; padding: 0 4px; transition: color 0.15s;
+    }
+    .remove-row-btn:hover { color: #d64045; }
+
+    .cert-box {
+      background: #f0f4f8;
+      border-left: 4px solid #2E5FA3;
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 24px 0 20px;
+      font-size: 0.83rem;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .cert-box strong { color: #1F3864; }
+
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #1F3864 0%, #2E5FA3 100%);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      margin-top: 28px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Alerts */
+    .alert { padding: 14px 20px; border-radius: 7px; margin-bottom: 20px; font-size: 0.9rem; display: none; }
+    .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .alert-warning { background: #fef9c3; color: #713f12; border: 1px solid #fde047; }
+
+    /* Success overlay */
+    .success-overlay {
+      display: none;
+      text-align: center;
+      padding: 48px 36px;
+    }
+    .success-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #1F3864, #2E5FA3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2rem; color: #fff;
+    }
+    .success-overlay h3 { color: #1F3864; font-size: 1.5rem; margin-bottom: 10px; }
+    .success-overlay p  { color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 6px; }
+    .success-ref { color: #2E5FA3; font-weight: 700; font-size: 1.05rem; margin-top: 14px; }
+    .reset-btn {
+      display: inline-block; margin-top: 24px; padding: 11px 28px;
+      background: linear-gradient(135deg, #1F3864 0%, #2E5FA3 100%);
+      color: #fff; border: none; border-radius: 7px;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .form-body { padding: 20px 16px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
+      .page-header { padding: 14px 16px; }
+      .card-title { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>MPH United</h1>
+</header>
+
+<div class="card">
+  <div class="card-title">
+    <h2>IBC Recycling Request Form</h2>
+    <p>Submit this form to schedule a pickup of your IBC containers. Fields marked <span style="color:#fbbf24;">*</span> are required.</p>
+  </div>
+
+  <div class="form-body">
+
+    <!-- Success state -->
+    <div class="success-overlay" id="successOverlay">
+      <div class="success-icon">✓</div>
+      <h3>Request Submitted!</h3>
+      <p>Thank you! Your IBC pickup request has been received.</p>
+      <p>The MPH United team will be in touch to confirm your pickup date.</p>
+      <p>Questions? Email <a href="mailto:matt@mphunited.com" style="color:#2E5FA3;">matt@mphunited.com</a></p>
+      <p class="success-ref" id="refDisplay"></p>
+      <button class="reset-btn" onclick="resetForm()">Submit Another Request</button>
+    </div>
+
+    <!-- Form state -->
+    <div id="formWrapper">
+      <div class="alert alert-error"   id="errorAlert"></div>
+      <div class="alert alert-warning" id="warnAlert"></div>
+
+      <form id="ibcForm" novalidate>
+
+        <div class="section-label">Shipper Information</div>
+
+        <div class="grid grid-2">
+          <div class="field span-2">
+            <label>Company (Shipper) <span class="req">*</span></label>
+            <input type="text" name="company" placeholder="Company name" required/>
+          </div>
+          <div class="field span-2">
+            <label>Street Address <span class="req">*</span></label>
+            <input type="text" name="street_address" placeholder="Street address" required/>
+          </div>
+          <div class="field">
+            <label>City <span class="req">*</span></label>
+            <input type="text" name="city" placeholder="City" required/>
+          </div>
+          <div class="field">
+            <label>State <span class="req">*</span></label>
+            <input type="text" name="state" placeholder="TX" maxlength="2" required/>
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top:16px;">
+          <div class="field">
+            <label>Zip Code <span class="req">*</span></label>
+            <input type="text" name="zip_code" placeholder="00000" maxlength="10" required/>
+          </div>
+          <div class="field">
+            <label>Shipping Hours <span class="req">*</span></label>
+            <input type="text" name="shipping_hours" placeholder="Mon–Fri 8am–4pm" required/>
+          </div>
+          <div class="field">
+            <label>Dock / Bldg # <span class="opt">(optional)</span></label>
+            <input type="text" name="dock_bldg" placeholder="Dock #"/>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:28px;">Contact Information</div>
+
+        <div class="grid grid-2">
+          <div class="field span-2">
+            <label>Contact Name <span class="req">*</span></label>
+            <input type="text" name="contact_name" placeholder="Full name" required/>
+          </div>
+          <div class="field">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" name="email" placeholder="email@company.com" required/>
+          </div>
+          <div class="field">
+            <label>Phone <span class="req">*</span></label>
+            <input type="text" name="phone" placeholder="(000) 000-0000" required/>
+          </div>
+          <div class="field">
+            <label>Fax <span class="opt">(optional)</span></label>
+            <input type="text" name="fax" placeholder="(000) 000-0000"/>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:28px;">Container Details</div>
+        <p style="font-size:0.82rem;color:#6b7280;margin-bottom:12px;">
+          Enter at least one container. Click <strong>+ Add Row</strong> for additional containers (up to 10).
+        </p>
+
+        <div style="overflow-x:auto;">
+          <table class="container-table" id="containerTable">
+            <thead>
+              <tr>
+                <th style="width:28px;">#</th>
+                <th>Quantity</th>
+                <th>Capacity (Gal/Ltr)</th>
+                <th>Hazmat?</th>
+                <th>Triple Rinsed?</th>
+                <th>Product Last Contained</th>
+                <th>Container Type</th>
+                <th style="width:32px;"></th>
+              </tr>
+            </thead>
+            <tbody id="containerBody">
+              <!-- Row 1 injected by JS -->
+            </tbody>
+          </table>
+        </div>
+        <button type="button" class="add-row-btn" onclick="addRow()">+ Add Row</button>
+
+        <div class="cert-box">
+          <strong>Certification:</strong> By submitting this form, you hereby certify that these containers
+          are <em>"RCRA empty"</em> according to 40 CFR 261.7(b)(1). Under rules of DOT, all IBC closures
+          must be on the IBC cap, valve, and fittings. IBCs must be in reusable condition.
+          By signing below, you agree to the above and MPH United's standard program rules.
+        </div>
+
+        <div class="section-label">Signature</div>
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Full Name (as signature) <span class="req">*</span></label>
+            <input type="text" name="signature" placeholder="Type your full name" required/>
+          </div>
+          <div class="field">
+            <label>Date <span class="req">*</span></label>
+            <input type="date" name="sign_date" required/>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  let rowCount = 0;
+  const MAX_ROWS = 10;
+
+  function makeRow(n, required) {
+    const req = required ? "required" : "";
+    return `
+      <tr id="row_${n}">
+        <td class="row-num">${n}</td>
+        <td><input type="number" name="qty_${n}" min="1" placeholder="Qty" ${req}/></td>
+        <td><input type="text"   name="capacity_${n}" placeholder="e.g. 330 Gal" ${req}/></td>
+        <td>
+          <select name="hazmat_${n}" ${req}>
+            <option value="">Select</option>
+            <option>Yes</option><option>No</option>
+          </select>
+        </td>
+        <td>
+          <select name="rinsed_${n}" ${req}>
+            <option value="">Select</option>
+            <option>Yes</option><option>No</option>
+          </select>
+        </td>
+        <td><input type="text" name="product_${n}" placeholder="Product name" ${req}/></td>
+        <td>
+          <select name="type_${n}" ${req}>
+            <option value="">Select</option>
+            <option>IBC</option><option>Drum</option><option>Tote</option>
+          </select>
+        </td>
+        <td>${n > 1 ? `<button type="button" class="remove-row-btn" onclick="removeRow(${n})" title="Remove">✕</button>` : ""}</td>
+      </tr>`;
+  }
+
+  function addRow() {
+    if (rowCount >= MAX_ROWS) { alert("Maximum 10 container rows allowed."); return; }
+    rowCount++;
+    document.getElementById("containerBody").insertAdjacentHTML("beforeend", makeRow(rowCount, rowCount === 1));
+  }
+
+  function removeRow(n) {
+    const row = document.getElementById(`row_${n}`);
+    if (row) row.remove();
+  }
+
+  // Init first row + default date
+  addRow();
+  document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
+
+  // ── Form submission via fetch ─────────────────────────────────────────────
+  document.getElementById("ibcForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    hideAlerts();
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+    // Gather all form data into a plain object
+    const fd  = new FormData(this);
+    const data = {};
+    fd.forEach((val, key) => { data[key] = val; });
+
+    try {
+      const res  = await fetch("/api/submit", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(data),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        showError(json.error || "Submission failed. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "Submit Pickup Request";
+        return;
+      }
+
+      // Show success
+      if (json.warning) showWarning(json.warning);
+      document.getElementById("refDisplay").textContent = `Confirmation #${json.ref_id}`;
+      document.getElementById("formWrapper").style.display = "none";
+      document.getElementById("successOverlay").style.display = "block";
+
+    } catch (err) {
+      showError("Network error — please check your connection and try again.");
+      btn.disabled = false;
+      btn.textContent = "Submit Pickup Request";
+    }
+  });
+
+  function showError(msg)   { const el = document.getElementById("errorAlert");  el.textContent = msg; el.style.display = "block"; el.scrollIntoView({behavior:"smooth",block:"center"}); }
+  function showWarning(msg) { const el = document.getElementById("warnAlert");   el.textContent = msg; el.style.display = "block"; }
+  function hideAlerts()     { document.getElementById("errorAlert").style.display = "none"; document.getElementById("warnAlert").style.display = "none"; }
+
+  function resetForm() {
+    document.getElementById("ibcForm").reset();
+    document.getElementById("containerBody").innerHTML = "";
+    rowCount = 0;
+    addRow();
+    document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
+    document.getElementById("submitBtn").disabled = false;
+    document.getElementById("submitBtn").textContent = "Submit Pickup Request";
+    document.getElementById("successOverlay").style.display = "none";
+    document.getElementById("formWrapper").style.display = "block";
+    hideAlerts();
+    window.scrollTo({top: 0, behavior: "smooth"});
+  }
+</script>
+</body>
+</html>
