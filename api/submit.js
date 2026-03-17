@@ -1,34 +1,36 @@
 // MPH United – IBC Recycling Request Form
-// Vercel Serverless Function: handles form submission + Office 365 email
+// Vercel Serverless Function: handles form submission + SendGrid email
 
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 const { v4: uuidv4 } = require("uuid");
 
-// ── Email transporter (Office 365 SMTP) ─────────────────────────────────────
-function createTransporter() {
-  return nodemailer.createTransport({
-    host:   process.env.SMTP_HOST     || "smtp.office365.com",
-    port:   parseInt(process.env.SMTP_PORT || "587"),
-    secure: false, // STARTTLS
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-    tls: { ciphers: "SSLv3" },
+// ── Read raw request body ────────────────────────────────────────────────────
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => { data += chunk.toString(); });
+    req.on("end",  () => resolve(data));
+    req.on("error", reject);
   });
 }
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")   return res.status(405).json({ error: "Method not allowed" });
 
-  const body = req.body;
+  // Parse body from raw stream
+  let body;
+  try {
+    const raw = await readBody(req);
+    body = JSON.parse(raw);
+  } catch {
+    return res.status(400).json({ error: "Could not parse request body." });
+  }
 
   // ── Validate required fields ───────────────────────────────────────────────
   const required = [
@@ -83,7 +85,6 @@ module.exports = async function handler(req, res) {
       <p style="color:#a0b8d8;margin:4px 0 0;font-size:0.85rem;">Reference: ${ref_id}</p>
     </div>
     <div style="background:#fff;border:1px solid #d6e4f0;border-top:none;padding:28px 30px;border-radius:0 0 8px 8px;">
-
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin-bottom:14px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Shipper Information</h3>
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
         <tr><td style="padding:5px 0;color:#6b7280;width:180px;">Company</td><td style="padding:5px 0;font-weight:600;">${body.company}</td></tr>
@@ -95,7 +96,6 @@ module.exports = async function handler(req, res) {
         <tr><td style="padding:5px 0;color:#6b7280;">Shipping Hours</td><td style="padding:5px 0;">${body.shipping_hours}</td></tr>
         ${body.dock_bldg ? `<tr><td style="padding:5px 0;color:#6b7280;">Dock / Bldg #</td><td style="padding:5px 0;">${body.dock_bldg}</td></tr>` : ""}
       </table>
-
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">
         Container Details (${containers.length} container${containers.length !== 1 ? "s" : ""})
       </h3>
@@ -112,36 +112,33 @@ module.exports = async function handler(req, res) {
         </thead>
         <tbody>${containerRows}</tbody>
       </table>
-
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Signature</h3>
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
         <tr><td style="padding:5px 0;color:#6b7280;width:180px;">Signed by</td><td style="padding:5px 0;font-weight:600;">${body.signature}</td></tr>
         <tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;">${body.sign_date}</td></tr>
       </table>
-
       <p style="margin-top:24px;font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5eaf2;padding-top:14px;">
         Submitted via mphunited.com/pick-up &nbsp;|&nbsp; ${new Date().toUTCString()} &nbsp;|&nbsp; Ref: ${ref_id}
       </p>
     </div>
   </body></html>`;
 
-  // ── Send email ─────────────────────────────────────────────────────────────
+  // ── Send email via SendGrid ─────────────────────────────────────────────────
   try {
-    const transporter = createTransporter();
-    await transporter.sendMail({
-      from:     process.env.EMAIL_FROM || process.env.SMTP_USER,
-      to:       process.env.EMAIL_TO   || "matt@mphunited.com",
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    await sgMail.send({
+      to:       process.env.EMAIL_TO  || "matt@mphunited.com",
+      from:     process.env.EMAIL_FROM,
       replyTo:  body.email,
       subject:  `[IBC Pickup Request] ${body.company} — ${ref_id}`,
       html,
     });
   } catch (err) {
-    console.error("Email error:", err);
-    // Return success to user but log the error — don't block submission
-    return res.status(200).json({
-      ok:     true,
-      ref_id,
-      warning: "Submission saved but email notification failed. Please contact matt@mphunited.com.",
+    const sgError = err?.response?.body || err.message;
+    console.error("SendGrid error:", JSON.stringify(sgError));
+    return res.status(500).json({
+      error: "Email failed to send.",
+      detail: JSON.stringify(sgError),
     });
   }
 
