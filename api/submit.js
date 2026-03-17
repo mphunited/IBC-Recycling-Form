@@ -102,7 +102,7 @@ module.exports = async function handler(req, res) {
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Signature</h3>
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
         <tr><td style="padding:5px 0;color:#6b7280;width:180px;">Signed by</td><td style="padding:5px 0;font-weight:600;">${body.signature}</td></tr>
-        <tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;">${body.sign_date}</td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;">${body.sign_date ? (() => { const [y,m,d] = body.sign_date.split("-"); return `${m}/${d}/${y}`; })() : ""}</td></tr>
       </table>
       <p style="margin-top:24px;font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5eaf2;padding-top:14px;">
         Submitted via mphunited.com/pick-up &nbsp;|&nbsp; ${new Date().toUTCString()} &nbsp;|&nbsp; Ref: ${ref_id}
