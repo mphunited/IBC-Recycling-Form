@@ -2,7 +2,7 @@
 // Vercel Serverless Function: handles form submission + SendGrid email
 
 const sgMail = require("@sendgrid/mail");
-const { v4: uuidv4 } = require("uuid");
+const { randomBytes } = require("crypto");
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
@@ -52,7 +52,7 @@ module.exports = async function handler(req, res) {
 
   // ── Generate reference ID ──────────────────────────────────────────────────
   const date   = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const ref_id = `MPH-${date}-${uuidv4().slice(0, 6).toUpperCase()}`;
+  const ref_id = `MPH-${date}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   // ── Build HTML email ───────────────────────────────────────────────────────
   const containerRows = containers.map((c) => `

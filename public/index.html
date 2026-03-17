@@ -403,23 +403,30 @@
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(data),
       });
-      const json = await res.json();
+
+      let json = {};
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        json = await res.json();
+      } else {
+        const text = await res.text();
+        json = { error: `Server error (${res.status}): ${text.slice(0, 200)}` };
+      }
 
       if (!res.ok) {
-        showError(json.error || "Submission failed. Please try again.");
+        showError(json.error || json.detail || "Submission failed. Please try again.");
         btn.disabled = false;
         btn.textContent = "Submit Pickup Request";
         return;
       }
 
       // Show success
-      if (json.warning) showWarning(json.warning);
       document.getElementById("refDisplay").textContent = `Confirmation #${json.ref_id}`;
       document.getElementById("formWrapper").style.display = "none";
       document.getElementById("successOverlay").style.display = "block";
 
     } catch (err) {
-      showError("Network error — please check your connection and try again.");
+      showError("Could not reach server: " + err.message);
       btn.disabled = false;
       btn.textContent = "Submit Pickup Request";
     }
