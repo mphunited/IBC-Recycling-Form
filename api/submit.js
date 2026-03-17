@@ -4,16 +4,6 @@
 const sgMail = require("@sendgrid/mail");
 const { v4: uuidv4 } = require("uuid");
 
-// ── Read raw request body ────────────────────────────────────────────────────
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => { data += chunk.toString(); });
-    req.on("end",  () => resolve(data));
-    req.on("error", reject);
-  });
-}
-
 // ── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,12 +13,9 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST")   return res.status(405).json({ error: "Method not allowed" });
 
-  // Parse body from raw stream
-  let body;
-  try {
-    const raw = await readBody(req);
-    body = JSON.parse(raw);
-  } catch {
+  // Vercel auto-parses JSON bodies — use req.body directly
+  const body = req.body;
+  if (!body || typeof body !== "object") {
     return res.status(400).json({ error: "Could not parse request body." });
   }
 
