@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
         ${body.dock_bldg ? `<tr><td style="padding:5px 0;color:#6b7280;">Dock / Bldg #</td><td style="padding:5px 0;">${body.dock_bldg}</td></tr>` : ""}
       </table>
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">
-        Container Details (${containers.length} container${containers.length !== 1 ? "s" : ""})
+        Container Details
       </h3>
       <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
         <thead>
