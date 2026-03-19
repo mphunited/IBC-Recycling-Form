@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   // ── Validate required fields ───────────────────────────────────────────────
   const required = [
     "company", "street_address", "city", "state", "zip_code",
-    "contact_name", "email", "phone", "shipping_hours", "signature", "sign_date",
+    "contact_name", "email", "phone", "shipping_hours", "pickup_date", "signature", "sign_date",
   ];
   const missing = required.filter((f) => !body[f]?.trim());
   if (missing.length) {
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
 
   // ── Collect container rows ─────────────────────────────────────────────────
   const containers = [];
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 25; i++) {
     const qty = body[`qty_${i}`]?.trim();
     if (!qty) continue;
     containers.push({
@@ -82,6 +82,7 @@ module.exports = async function handler(req, res) {
         ${body.fax ? `<tr><td style="padding:5px 0;color:#6b7280;">Fax</td><td style="padding:5px 0;">${body.fax}</td></tr>` : ""}
         <tr><td style="padding:5px 0;color:#6b7280;">Shipping Hours</td><td style="padding:5px 0;">${body.shipping_hours}</td></tr>
         ${body.dock_bldg ? `<tr><td style="padding:5px 0;color:#6b7280;">Dock / Bldg #</td><td style="padding:5px 0;">${body.dock_bldg}</td></tr>` : ""}
+        <tr><td style="padding:5px 0;color:#6b7280;">Pickup Ready Date</td><td style="padding:5px 0;font-weight:600;">${body.pickup_date ? (() => { const [y,m,d] = body.pickup_date.split("-"); return `${m}/${d}/${y}`; })() : ""}</td></tr>
       </table>
       <h3 style="color:#2E5FA3;border-bottom:2px solid #d6e4f0;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">
         Container Details
@@ -104,6 +105,10 @@ module.exports = async function handler(req, res) {
         <tr><td style="padding:5px 0;color:#6b7280;width:180px;">Signed by</td><td style="padding:5px 0;font-weight:600;">${body.signature}</td></tr>
         <tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;">${body.sign_date ? (() => { const [y,m,d] = body.sign_date.split("-"); return `${m}/${d}/${y}`; })() : ""}</td></tr>
       </table>
+      ${body.notes ? `
+      <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Notes</h3>
+      <p style="font-size:0.9rem;color:#374151;line-height:1.6;">${body.notes.replace(/\n/g, "<br>")}</p>` : ""}
+      ${body.photo_name ? `<p style="margin-top:16px;font-size:0.82rem;color:#6b7280;">📎 Photo attached: ${body.photo_name}</p>` : ""}
       <p style="margin-top:24px;font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5eaf2;padding-top:14px;">
         Submitted via mphunited.com/pick-up &nbsp;|&nbsp; ${new Date().toUTCString()} &nbsp;|&nbsp; Ref: ${ref_id}
       </p>
@@ -113,13 +118,22 @@ module.exports = async function handler(req, res) {
   // ── Send email via SendGrid ─────────────────────────────────────────────────
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    await sgMail.send({
+    const msg = {
       to:       process.env.EMAIL_TO  || "matt@mphunited.com",
       from:     process.env.EMAIL_FROM,
       replyTo:  body.email,
       subject:  `[IBC Pickup Request] ${body.company} — ${ref_id}`,
       html,
-    });
+    };
+    if (body.photo_data && body.photo_name && body.photo_type) {
+      msg.attachments = [{
+        content:     body.photo_data,
+        filename:    body.photo_name,
+        type:        body.photo_type,
+        disposition: "attachment",
+      }];
+    }
+    await sgMail.send(msg);
   } catch (err) {
     const sgError = err?.response?.body || err.message;
     console.error("SendGrid error:", JSON.stringify(sgError));

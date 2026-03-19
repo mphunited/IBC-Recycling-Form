@@ -341,9 +341,7 @@
           </div>
         </div>
 
-        <div class="section-label" style="margin-top:28px;">Contact Information</div>
-
-        <div class="grid grid-2">
+        <div class="grid grid-2" style="margin-top:16px;">
           <div class="field span-2">
             <label>Contact Name <span class="req">*</span></label>
             <input type="text" name="contact_name" placeholder="Full name" required/>
@@ -356,15 +354,15 @@
             <label>Phone <span class="req">*</span></label>
             <input type="text" name="phone" placeholder="(000) 000-0000" required/>
           </div>
-          <div class="field">
-            <label>Fax <span class="opt">(optional)</span></label>
-            <input type="text" name="fax" placeholder="(000) 000-0000"/>
+          <div class="field span-2">
+            <label>Date Shipment Will Be Ready for Pickup <span class="req">*</span></label>
+            <input type="date" name="pickup_date" required/>
           </div>
         </div>
 
         <div class="section-label" style="margin-top:28px;">Container Details</div>
         <p style="font-size:0.82rem;color:#6b7280;margin-bottom:12px;">
-          Enter at least one container. Click <strong>+ Add Row</strong> for additional containers (up to 10).
+          Enter at least one container. Click <strong>+ Add Row</strong> for additional containers (up to 25).
         </p>
 
         <div style="overflow-x:auto;">
@@ -407,6 +405,18 @@
           </div>
         </div>
 
+        <div class="section-label">Notes</div>
+        <div class="field">
+          <label>Additional Information <span class="opt">(optional)</span></label>
+          <textarea name="notes" rows="4" placeholder="Enter any additional details about your shipment…" style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:6px;font-size:0.9rem;font-family:inherit;color:#1a1a2e;resize:vertical;"></textarea>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>Photo of Products <span class="opt">(optional — max 5 MB)</span></label>
+          <input type="file" id="photoInput" accept="image/*" style="padding:8px 0;font-size:0.88rem;"/>
+          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 5 MB.</span>
+        </div>
+
         <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
 
         <div style="margin-top:28px;padding:20px 24px;background:#f8f5ee;border-left:4px solid #C4962A;border-radius:0 6px 6px 0;">
@@ -426,32 +436,31 @@
 
 <script>
   let rowCount = 0;
-  const MAX_ROWS = 10;
+  const MAX_ROWS = 25;
 
-  function makeRow(n, required) {
-    const req = required ? "required" : "";
+  function makeRow(n) {
     return `
       <tr id="row_${n}">
         <td class="row-num">${n}</td>
-        <td><input type="number" name="qty_${n}" min="1" placeholder="Qty" ${req}/></td>
-        <td><input type="text"   name="capacity_${n}" placeholder="e.g. 330 Gal" ${req}/></td>
+        <td><input type="number" name="qty_${n}" min="1" placeholder="Qty" required/></td>
+        <td><input type="text"   name="capacity_${n}" placeholder="e.g. 330 Gal" required/></td>
         <td>
-          <select name="hazmat_${n}" ${req}>
+          <select name="hazmat_${n}" required>
             <option value="">Select</option>
             <option>Yes</option><option>No</option>
           </select>
         </td>
         <td>
-          <select name="rinsed_${n}" ${req}>
+          <select name="rinsed_${n}" required>
             <option value="">Select</option>
             <option>Yes</option><option>No</option>
           </select>
         </td>
-        <td><input type="text" name="product_${n}" placeholder="Product name" ${req}/></td>
+        <td><input type="text" name="product_${n}" placeholder="Product name" required/></td>
         <td>
-          <select name="type_${n}" ${req}>
+          <select name="type_${n}" required>
             <option value="">Select</option>
-            <option>IBC</option><option>Drum</option><option>Tote</option>
+            <option>IBC</option><option>Drum</option><option>Jug</option><option>Other</option>
           </select>
         </td>
         <td>${n > 1 ? `<button type="button" class="remove-row-btn" onclick="removeRow(${n})" title="Remove">✕</button>` : ""}</td>
@@ -459,9 +468,9 @@
   }
 
   function addRow() {
-    if (rowCount >= MAX_ROWS) { alert("Maximum 10 container rows allowed."); return; }
+    if (rowCount >= MAX_ROWS) { alert("Maximum 25 container rows allowed."); return; }
     rowCount++;
-    document.getElementById("containerBody").insertAdjacentHTML("beforeend", makeRow(rowCount, rowCount === 1));
+    document.getElementById("containerBody").insertAdjacentHTML("beforeend", makeRow(rowCount));
   }
 
   function removeRow(n) {
@@ -482,10 +491,31 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Submitting…';
 
+    // Validate photo size if provided
+    const photoFile = document.getElementById("photoInput").files[0];
+    if (photoFile && photoFile.size > 5 * 1024 * 1024) {
+      document.getElementById("photoError").style.display = "block";
+      btn.disabled = false;
+      btn.textContent = "Submit Pickup Request";
+      return;
+    }
+    document.getElementById("photoError").style.display = "none";
+
     // Gather all form data into a plain object
     const fd  = new FormData(this);
     const data = {};
     fd.forEach((val, key) => { data[key] = val; });
+
+    // Attach photo as base64 if provided
+    if (photoFile) {
+      data.photo_name = photoFile.name;
+      data.photo_type = photoFile.type;
+      data.photo_data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result.split(",")[1]);
+        reader.readAsDataURL(photoFile);
+      });
+    }
 
     try {
       const res  = await fetch("/api/submit", {
@@ -534,6 +564,8 @@
     document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
     document.getElementById("submitBtn").disabled = false;
     document.getElementById("submitBtn").textContent = "Submit Pickup Request";
+    document.getElementById("photoInput").value = "";
+    document.getElementById("photoError").style.display = "none";
     document.getElementById("successOverlay").style.display = "none";
     document.getElementById("formWrapper").style.display = "block";
     hideAlerts();
