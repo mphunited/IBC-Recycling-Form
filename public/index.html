@@ -491,6 +491,32 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Submitting…';
 
+    // Validate all container rows — every field is required
+    const rows = document.querySelectorAll("#containerBody tr");
+    let containerError = null;
+    rows.forEach((row, idx) => {
+      if (containerError) return;
+      const rowNum = idx + 1;
+      const qty      = row.querySelector("input[name^='qty_']");
+      const capacity = row.querySelector("input[name^='capacity_']");
+      const hazmat   = row.querySelector("select[name^='hazmat_']");
+      const rinsed   = row.querySelector("select[name^='rinsed_']");
+      const product  = row.querySelector("input[name^='product_']");
+      const type     = row.querySelector("select[name^='type_']");
+      if (!qty?.value.trim())      containerError = `Row ${rowNum}: Quantity is required.`;
+      else if (!capacity?.value.trim()) containerError = `Row ${rowNum}: Capacity is required.`;
+      else if (!hazmat?.value)     containerError = `Row ${rowNum}: Hazmat selection is required.`;
+      else if (!rinsed?.value)     containerError = `Row ${rowNum}: Triple Rinsed selection is required.`;
+      else if (!product?.value.trim())  containerError = `Row ${rowNum}: Product Last Contained is required.`;
+      else if (!type?.value)       containerError = `Row ${rowNum}: Container Type is required.`;
+    });
+    if (containerError) {
+      showError(containerError);
+      btn.disabled = false;
+      btn.textContent = "Submit Pickup Request";
+      return;
+    }
+
     // Validate photo size if provided
     const photoFile = document.getElementById("photoInput").files[0];
     if (photoFile && photoFile.size > 5 * 1024 * 1024) {
