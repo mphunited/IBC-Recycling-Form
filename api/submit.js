@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
   // ── Validate required fields ───────────────────────────────────────────────
   const required = [
     "company", "street_address", "city", "state", "zip_code",
-    "contact_name", "email", "phone", "shipping_hours", "pickup_date", "signature", "sign_date",
+    "contact_name", "email", "phone", "shipping_hours", "signature", "sign_date",
   ];
   const missing = required.filter((f) => !body[f]?.trim());
   if (missing.length) {
