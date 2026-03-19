@@ -5,7 +5,7 @@ const sgMail = require("@sendgrid/mail");
 const { randomBytes } = require("crypto");
 
 // ── Main handler ─────────────────────────────────────────────────────────────
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -144,4 +144,15 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(200).json({ ok: true, ref_id });
+}
+
+// Increase body parser limit to handle base64 photo attachments
+handler.config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "10mb",
+    },
+  },
 };
+
+module.exports = handler;

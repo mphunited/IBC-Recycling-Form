@@ -370,12 +370,12 @@
             <thead>
               <tr>
                 <th style="width:28px;">#</th>
-                <th>Quantity</th>
-                <th>Capacity (Gal/Ltr)</th>
-                <th>Hazmat?</th>
-                <th>Triple Rinsed?</th>
-                <th>Product Last Contained</th>
-                <th>Container Type</th>
+                <th>Quantity <span style="color:#fca5a5;">*</span></th>
+                <th>Capacity (Gal/Ltr) <span style="color:#fca5a5;">*</span></th>
+                <th>Hazmat? <span style="color:#fca5a5;">*</span></th>
+                <th>Triple Rinsed? <span style="color:#fca5a5;">*</span></th>
+                <th>Product Last Contained <span style="color:#fca5a5;">*</span></th>
+                <th>Container Type <span style="color:#fca5a5;">*</span></th>
                 <th style="width:32px;"></th>
               </tr>
             </thead>
@@ -412,9 +412,9 @@
         </div>
 
         <div class="field" style="margin-top:16px;">
-          <label>Photo of Products <span class="opt">(optional — max 5 MB)</span></label>
+          <label>Photo of Products <span class="opt">(optional — max 3 MB)</span></label>
           <input type="file" id="photoInput" accept="image/*" style="padding:8px 0;font-size:0.88rem;"/>
-          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 5 MB.</span>
+          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 3 MB.</span>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
@@ -519,7 +519,7 @@
 
     // Validate photo size if provided
     const photoFile = document.getElementById("photoInput").files[0];
-    if (photoFile && photoFile.size > 5 * 1024 * 1024) {
+    if (photoFile && photoFile.size > 3 * 1024 * 1024) {
       document.getElementById("photoError").style.display = "block";
       btn.disabled = false;
       btn.textContent = "Submit Pickup Request";
