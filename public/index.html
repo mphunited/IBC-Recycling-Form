@@ -412,9 +412,9 @@
         </div>
 
         <div class="field" style="margin-top:16px;">
-          <label>Photo of Products <span class="opt">(optional — max 3 MB)</span></label>
+          <label>You may attach photos of containers here: <span class="opt">(optional — max 20 MB)</span></label>
           <input type="file" id="photoInput" accept="image/*" style="padding:8px 0;font-size:0.88rem;"/>
-          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 3 MB.</span>
+          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 20 MB.</span>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
@@ -443,7 +443,7 @@
       <tr id="row_${n}">
         <td class="row-num">${n}</td>
         <td><input type="number" name="qty_${n}" min="1" placeholder="Qty" required/></td>
-        <td><input type="text"   name="capacity_${n}" placeholder="e.g. 330 Gal" required/></td>
+        <td><input type="text"   name="capacity_${n}" placeholder="275 Gal" required/></td>
         <td>
           <select name="hazmat_${n}" required>
             <option value="">Select</option>
@@ -519,7 +519,7 @@
 
     // Validate photo size if provided
     const photoFile = document.getElementById("photoInput").files[0];
-    if (photoFile && photoFile.size > 3 * 1024 * 1024) {
+    if (photoFile && photoFile.size > 20 * 1024 * 1024) {
       document.getElementById("photoError").style.display = "block";
       btn.disabled = false;
       btn.textContent = "Submit Pickup Request";
