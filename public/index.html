@@ -583,19 +583,47 @@
     const data = {};
     fd.forEach((val, key) => { data[key] = val; });
 
-    // Read all photos as base64
-    if (photoFiles.length) {
-      data.photos = await Promise.all(photoFiles.map(file =>
-        new Promise((resolve) => {
+    // Compress and encode photos before sending
+    function compressPhoto(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const MAX_DIM = 1200;
+          let w = img.width, h = img.height;
+          if (w > MAX_DIM || h > MAX_DIM) {
+            if (w >= h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+            else        { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          canvas.toBlob((blob) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve({
+              name: file.name.replace(/\.[^.]+$/, ".jpg"),
+              type: "image/jpeg",
+              data: e.target.result.split(",")[1],
+            });
+            reader.readAsDataURL(blob);
+          }, "image/jpeg", 0.75);
+        };
+        img.onerror = () => {
+          // Fallback: send as-is if canvas fails
+          URL.revokeObjectURL(url);
           const reader = new FileReader();
-          reader.onload = (e) => resolve({
-            name: file.name,
-            type: file.type,
-            data: e.target.result.split(",")[1],
-          });
+          reader.onload = (e) => resolve({ name: file.name, type: file.type, data: e.target.result.split(",")[1] });
           reader.readAsDataURL(file);
-        })
-      ));
+        };
+        img.src = url;
+      });
+    }
+
+    if (photoFiles.length) {
+      btn.textContent = "Preparing photos…";
+      data.photos = await Promise.all(photoFiles.map(compressPhoto));
+      btn.innerHTML = '<span class="spinner"></span>Submitting…';
     }
 
     try {
