@@ -192,6 +192,23 @@
     .submit-btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
     .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    /* Photo buttons */
+    .photo-slot { display:flex; align-items:center; }
+    .photo-btn {
+      background: #fff;
+      border: 1.5px solid #C4962A;
+      color: #C4962A;
+      font-weight: 600;
+      font-size: 0.82rem;
+      padding: 7px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .photo-btn:hover { background: #C4962A; color: #fff; }
+    .photo-btn.has-file { background: #C4962A; color: #fff; }
+
     /* Alerts */
     .alert { padding: 14px 20px; border-radius: 7px; margin-bottom: 20px; font-size: 0.9rem; display: none; }
     .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
@@ -412,9 +429,35 @@
         </div>
 
         <div class="field" style="margin-top:16px;">
-          <label>You may attach photos of containers here: <span class="opt">(optional — select multiple, max 20 MB each)</span></label>
-          <input type="file" id="photoInput" accept="image/*" multiple style="padding:8px 0;font-size:0.88rem;"/>
-          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">One or more files exceed 20 MB. Please choose smaller images.</span>
+          <label>You may attach photos of containers here: <span class="opt">(optional — up to 5 photos, max 20 MB each)</span></label>
+          <div id="photoSlots" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;">
+            <div class="photo-slot" data-slot="1">
+              <input type="file" id="photoInput1" accept="image/*" style="display:none;"/>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput1').click()">📷 Photo 1</button>
+              <span class="photo-name" id="photoName1" style="font-size:0.78rem;color:#6b7280;margin-left:8px;"></span>
+            </div>
+            <div class="photo-slot" data-slot="2">
+              <input type="file" id="photoInput2" accept="image/*" style="display:none;"/>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput2').click()">📷 Photo 2</button>
+              <span class="photo-name" id="photoName2" style="font-size:0.78rem;color:#6b7280;margin-left:8px;"></span>
+            </div>
+            <div class="photo-slot" data-slot="3">
+              <input type="file" id="photoInput3" accept="image/*" style="display:none;"/>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput3').click()">📷 Photo 3</button>
+              <span class="photo-name" id="photoName3" style="font-size:0.78rem;color:#6b7280;margin-left:8px;"></span>
+            </div>
+            <div class="photo-slot" data-slot="4">
+              <input type="file" id="photoInput4" accept="image/*" style="display:none;"/>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput4').click()">📷 Photo 4</button>
+              <span class="photo-name" id="photoName4" style="font-size:0.78rem;color:#6b7280;margin-left:8px;"></span>
+            </div>
+            <div class="photo-slot" data-slot="5">
+              <input type="file" id="photoInput5" accept="image/*" style="display:none;"/>
+              <button type="button" class="photo-btn" onclick="document.getElementById('photoInput5').click()">📷 Photo 5</button>
+              <span class="photo-name" id="photoName5" style="font-size:0.78rem;color:#6b7280;margin-left:8px;"></span>
+            </div>
+          </div>
+          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;margin-top:6px;display:none;">One or more files exceed 20 MB. Please choose smaller images.</span>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
@@ -520,8 +563,12 @@
       return;
     }
 
-    // Validate photo sizes if provided
-    const photoFiles = Array.from(document.getElementById("photoInput").files);
+    // Collect files from all 5 photo slots
+    const photoFiles = [];
+    for (let s = 1; s <= 5; s++) {
+      const input = document.getElementById("photoInput" + s);
+      if (input.files && input.files[0]) photoFiles.push(input.files[0]);
+    }
     const oversized = photoFiles.filter(f => f.size > 20 * 1024 * 1024);
     if (oversized.length) {
       document.getElementById("photoError").style.display = "block";
@@ -590,6 +637,23 @@
   function showWarning(msg) { const el = document.getElementById("warnAlert");   el.textContent = msg; el.style.display = "block"; }
   function hideAlerts()     { document.getElementById("errorAlert").style.display = "none"; document.getElementById("warnAlert").style.display = "none"; }
 
+  // Wire up photo slot change listeners
+  for (let s = 1; s <= 5; s++) {
+    document.getElementById("photoInput" + s).addEventListener("change", function() {
+      const nameEl = document.getElementById("photoName" + s);
+      const btn = document.querySelector(`#photoSlots [data-slot="${s}"] .photo-btn`);
+      if (this.files && this.files[0]) {
+        nameEl.textContent = this.files[0].name;
+        btn.classList.add("has-file");
+        btn.textContent = "✓ Photo " + s;
+      } else {
+        nameEl.textContent = "";
+        btn.classList.remove("has-file");
+        btn.textContent = "📷 Photo " + s;
+      }
+    });
+  }
+
   function resetForm() {
     document.getElementById("ibcForm").reset();
     document.getElementById("containerBody").innerHTML = "";
@@ -598,7 +662,11 @@
     document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
     document.getElementById("submitBtn").disabled = false;
     document.getElementById("submitBtn").textContent = "Submit Pickup Request";
-    document.getElementById("photoInput").value = "";
+    for (let s = 1; s <= 5; s++) {
+      document.getElementById("photoInput" + s).value = "";
+      document.getElementById("photoName" + s).textContent = "";
+      document.querySelector(`#photoSlots [data-slot="${s}"] .photo-btn`).classList.remove("has-file");
+    }
     document.getElementById("photoError").style.display = "none";
     document.getElementById("successOverlay").style.display = "none";
     document.getElementById("formWrapper").style.display = "block";
