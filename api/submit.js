@@ -109,27 +109,36 @@ async function handler(req, res) {
       <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Notes</h3>
       <p style="font-size:0.9rem;color:#374151;line-height:1.6;">${body.notes.replace(/\n/g, "<br>")}</p>` : ""}
       ${Array.isArray(body.photos) && body.photos.length ? `
-      <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Container Photos (${body.photos.length})</h3>
-      ${body.photos.map((p, i) => `
-        <p style="font-size:0.78rem;color:#6b7280;margin:12px 0 4px;">Photo ${i + 1}: ${p.name}</p>
-        <img src="data:${p.type};base64,${p.data}" alt="Photo ${i + 1}" style="max-width:100%;border-radius:6px;border:1px solid #e5eaf2;display:block;margin-bottom:12px;" />
-      `).join("")}` : ""}
+      <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Container Photos</h3>
+      <p style="font-size:0.85rem;color:#374151;">${body.photos.length} photo(s) attached to this email.</p>` : ""}
       <p style="margin-top:24px;font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5eaf2;padding-top:14px;">
         Submitted via mphunited.com/pick-up &nbsp;|&nbsp; ${new Date().toUTCString()} &nbsp;|&nbsp; Ref: ${ref_id}
       </p>
     </div>
   </body></html>`;
 
+  // ── Build attachments from photos ──────────────────────────────────────────
+  const attachments = Array.isArray(body.photos)
+    ? body.photos.map((p, i) => ({
+        content:     p.data,           // raw base64, no data: prefix
+        filename:    p.name || `photo-${i + 1}.jpg`,
+        type:        p.type || "image/jpeg",
+        disposition: "attachment",
+      }))
+    : [];
+
   // ── Send email via SendGrid ─────────────────────────────────────────────────
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    await sgMail.send({
+    const msg = {
       to:       process.env.EMAIL_TO  || "matt@mphunited.com",
       from:     process.env.EMAIL_FROM,
       replyTo:  body.email,
       subject:  `[IBC Pickup Request] ${body.company} — ${ref_id}`,
       html,
-    });
+    };
+    if (attachments.length) msg.attachments = attachments;
+    await sgMail.send(msg);
   } catch (err) {
     const sgError = err?.response?.body || err.message;
     console.error("SendGrid error:", JSON.stringify(sgError));
