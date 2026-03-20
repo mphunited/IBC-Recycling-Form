@@ -412,9 +412,9 @@
         </div>
 
         <div class="field" style="margin-top:16px;">
-          <label>You may attach photos of containers here: <span class="opt">(optional — max 20 MB)</span></label>
-          <input type="file" id="photoInput" accept="image/*" style="padding:8px 0;font-size:0.88rem;"/>
-          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">File is too large. Please choose an image under 20 MB.</span>
+          <label>You may attach photos of containers here: <span class="opt">(optional — select multiple, max 20 MB each)</span></label>
+          <input type="file" id="photoInput" accept="image/*" multiple style="padding:8px 0;font-size:0.88rem;"/>
+          <span id="photoError" style="color:#991b1b;font-size:0.78rem;display:none;">One or more files exceed 20 MB. Please choose smaller images.</span>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Submit Pickup Request</button>
@@ -517,9 +517,10 @@
       return;
     }
 
-    // Validate photo size if provided
-    const photoFile = document.getElementById("photoInput").files[0];
-    if (photoFile && photoFile.size > 20 * 1024 * 1024) {
+    // Validate photo sizes if provided
+    const photoFiles = Array.from(document.getElementById("photoInput").files);
+    const oversized = photoFiles.filter(f => f.size > 20 * 1024 * 1024);
+    if (oversized.length) {
       document.getElementById("photoError").style.display = "block";
       btn.disabled = false;
       btn.textContent = "Submit Pickup Request";
@@ -532,15 +533,19 @@
     const data = {};
     fd.forEach((val, key) => { data[key] = val; });
 
-    // Attach photo as base64 if provided
-    if (photoFile) {
-      data.photo_name = photoFile.name;
-      data.photo_type = photoFile.type;
-      data.photo_data = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result.split(",")[1]);
-        reader.readAsDataURL(photoFile);
-      });
+    // Read all photos as base64
+    if (photoFiles.length) {
+      data.photos = await Promise.all(photoFiles.map(file =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve({
+            name: file.name,
+            type: file.type,
+            data: e.target.result.split(",")[1],
+          });
+          reader.readAsDataURL(file);
+        })
+      ));
     }
 
     try {

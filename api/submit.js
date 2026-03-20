@@ -108,9 +108,12 @@ async function handler(req, res) {
       ${body.notes ? `
       <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Notes</h3>
       <p style="font-size:0.9rem;color:#374151;line-height:1.6;">${body.notes.replace(/\n/g, "<br>")}</p>` : ""}
-      ${body.photo_data ? `
-      <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Product Photo</h3>
-      <img src="data:${body.photo_type};base64,${body.photo_data}" alt="Product photo" style="max-width:100%;border-radius:6px;border:1px solid #e5eaf2;" />` : ""}
+      ${Array.isArray(body.photos) && body.photos.length ? `
+      <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Container Photos (${body.photos.length})</h3>
+      ${body.photos.map((p, i) => `
+        <p style="font-size:0.78rem;color:#6b7280;margin:12px 0 4px;">Photo ${i + 1}: ${p.name}</p>
+        <img src="data:${p.type};base64,${p.data}" alt="Photo ${i + 1}" style="max-width:100%;border-radius:6px;border:1px solid #e5eaf2;display:block;margin-bottom:12px;" />
+      `).join("")}` : ""}
       <p style="margin-top:24px;font-size:0.78rem;color:#9ca3af;border-top:1px solid #e5eaf2;padding-top:14px;">
         Submitted via mphunited.com/pick-up &nbsp;|&nbsp; ${new Date().toUTCString()} &nbsp;|&nbsp; Ref: ${ref_id}
       </p>
