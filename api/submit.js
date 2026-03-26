@@ -130,6 +130,10 @@ async function handler(req, res) {
   // ── Send email via SendGrid ─────────────────────────────────────────────────
   try {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const ccAddresses = process.env.EMAIL_CC
+      ? process.env.EMAIL_CC.split(",").map(e => e.trim()).filter(Boolean)
+      : [];
+
     const msg = {
       to:       process.env.EMAIL_TO  || "matt@mphunited.com",
       from:     process.env.EMAIL_FROM,
@@ -137,6 +141,7 @@ async function handler(req, res) {
       subject:  `[IBC Pickup Request] ${body.company} — ${ref_id}`,
       html,
     };
+    if (ccAddresses.length) msg.cc = ccAddresses;
     if (attachments.length) msg.attachments = attachments;
     await sgMail.send(msg);
   } catch (err) {
