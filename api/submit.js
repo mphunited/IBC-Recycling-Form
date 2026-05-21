@@ -3,15 +3,52 @@
 
 const sgMail = require("@sendgrid/mail");
 const { randomBytes } = require("crypto");
+const { Ratelimit } = require("@upstash/ratelimit");
+const { Redis } = require("@upstash/redis");
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "1 h"),
+});
+
+// ── Allowed origins for CORS ─────────────────────────────────────────────────
+// Same-origin requests from the form itself don't need CORS at all.
+// This list only matters for cross-origin requests (other sites' JS).
+const ALLOWED_ORIGINS = [
+  "https://ibc-recycling-form.vercel.app",
+  // Add more here if you ever embed the form on another domain:
+  // "https://mphunited.com",
+  // "https://www.mphunited.com",
+];
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const origin = req.headers.origin;
+  // Echo the origin back ONLY if it's on the allowlist.
+  // Vercel preview deploys (project-name-<hash>.vercel.app) are also allowed.
+  const isVercelPreview =
+    typeof origin === "string" &&
+    /^https:\/\/ibc-recycling-form(-[a-z0-9-]+)?\.vercel\.app$/.test(origin);
+  if (origin && (ALLOWED_ORIGINS.includes(origin) || isVercelPreview)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST")   return res.status(405).json({ error: "Method not allowed" });
+
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const ip =
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    "unknown";
+  const { success } = await ratelimit.limit(ip);
+  if (!success) {
+    return res.status(429).json({
+      error: "Too many requests. Please wait and try again.",
+    });
+  }
 
   // Vercel auto-parses JSON bodies — use req.body directly
   const body = req.body;
@@ -147,10 +184,7 @@ async function handler(req, res) {
   } catch (err) {
     const sgError = err?.response?.body || err.message;
     console.error("SendGrid error:", JSON.stringify(sgError));
-    return res.status(500).json({
-      error: "Email failed to send.",
-      detail: JSON.stringify(sgError),
-    });
+    return res.status(500).json({ error: "Email failed to send." });
   }
 
   return res.status(200).json({ ok: true, ref_id });
