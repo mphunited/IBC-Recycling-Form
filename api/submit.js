@@ -126,13 +126,13 @@ function generatePDF(body, containers, ref_id) {
       y = doc.y + 12;
     }
 
-    // ── Footer ────────────────────────────────────────────────────────────────
-    doc.moveTo(L, doc.page.height - 40).lineTo(R, doc.page.height - 40)
-       .strokeColor("#e5eaf2").stroke();
+    // ── Footer (flows after content, no absolute positioning) ─────────────────
+    y = doc.y + 16;
+    doc.moveTo(L, y).lineTo(R, y).strokeColor("#e5eaf2").stroke();
     doc.font("Helvetica").fontSize(7.5).fillColor(LBL)
        .text(
          `Submitted via mphunited.com/pick-up  |  ${new Date().toUTCString()}  |  Ref: ${ref_id}`,
-         L, doc.page.height - 32, { width: R - L, align: "center" }
+         L, y + 6, { width: R - L, align: "center" }
        );
 
     doc.end();
