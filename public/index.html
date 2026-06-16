@@ -391,7 +391,7 @@
                 <th>Capacity (Gal/Ltr) <span style="color:#fca5a5;">*</span></th>
                 <th>Hazmat? <span style="color:#fca5a5;">*</span></th>
                 <th>Triple Rinsed? <span style="color:#fca5a5;">*</span></th>
-                <th>Product Last Contained <span style="color:#fca5a5;">*</span></th>
+                <th>List ALL Last Contained Specific Product(s) <span style="color:#fca5a5;">*</span></th>
                 <th>Container Type <span style="color:#fca5a5;">*</span></th>
                 <th style="width:32px;"></th>
               </tr>
@@ -553,7 +553,7 @@
       else if (!capacity?.value.trim()) containerError = `Row ${rowNum}: Capacity is required.`;
       else if (!hazmat?.value)     containerError = `Row ${rowNum}: Hazmat selection is required.`;
       else if (!rinsed?.value)     containerError = `Row ${rowNum}: Triple Rinsed selection is required.`;
-      else if (!product?.value.trim())  containerError = `Row ${rowNum}: Product Last Contained is required.`;
+      else if (!product?.value.trim())  containerError = `Row ${rowNum}: List ALL Last Contained Specific Product(s) is required.`;
       else if (!type?.value)       containerError = `Row ${rowNum}: Container Type is required.`;
     });
     if (containerError) {

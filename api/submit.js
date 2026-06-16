@@ -79,7 +79,7 @@ function generatePDF(body, containers, ref_id) {
       { label: "Capacity",              x: L + 35,   w: 65  },
       { label: "Hazmat",                x: L + 100,  w: 55  },
       { label: "Triple Rinsed",         x: L + 155,  w: 70  },
-      { label: "Product Last Contained",x: L + 225,  w: 155 },
+      { label: "List ALL Last Contained Specific Product(s)", x: L + 225, w: 155 },
       { label: "Type",                  x: L + 380,  w: 80  },
     ];
     const rowH = 16;
@@ -260,7 +260,7 @@ async function handler(req, res) {
             <th style="padding:8px 10px;text-align:left;">Capacity</th>
             <th style="padding:8px 10px;text-align:left;">Hazmat</th>
             <th style="padding:8px 10px;text-align:left;">Triple Rinsed</th>
-            <th style="padding:8px 10px;text-align:left;">Product Last Contained</th>
+            <th style="padding:8px 10px;text-align:left;">List ALL Last Contained Specific Product(s)</th>
             <th style="padding:8px 10px;text-align:left;">Type</th>
           </tr>
         </thead>
