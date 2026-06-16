@@ -1,7 +1,8 @@
 // MPH United – IBC Recycling Request Form
 // Vercel Serverless Function: handles form submission + SendGrid email
 
-const sgMail = require("@sendgrid/mail");
+const sgMail   = require("@sendgrid/mail");
+const PDFDocument = require("pdfkit");
 const { randomBytes } = require("crypto");
 const { Ratelimit } = require("@upstash/ratelimit");
 const { Redis } = require("@upstash/redis");
@@ -9,6 +10,134 @@ const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(10, "1 h"),
 });
+
+// ── PDF generator ────────────────────────────────────────────────────────────
+function generatePDF(body, containers, ref_id) {
+  return new Promise((resolve, reject) => {
+    const doc    = new PDFDocument({ margin: 50, size: "LETTER" });
+    const chunks = [];
+    doc.on("data",  (c) => chunks.push(c));
+    doc.on("end",   ()  => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    const W   = doc.page.width;
+    const L   = 50;   // left margin
+    const R   = W - 50; // right margin
+    const BLU = "#1F3864";
+    const LBL = "#6b7280";
+
+    // ── Header bar ────────────────────────────────────────────────────────────
+    doc.rect(L, 40, W - 100, 52).fill(BLU);
+    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(14)
+       .text("MPH United — IBC Pickup Request", L + 14, 53);
+    doc.font("Helvetica").fontSize(9).fillColor("#a0b8d8")
+       .text(`Reference: ${ref_id}`, L + 14, 72);
+
+    let y = 112;
+
+    // ── Section helper ────────────────────────────────────────────────────────
+    function sectionTitle(title) {
+      doc.moveTo(L, y).lineTo(R, y).strokeColor("#d6e4f0").stroke();
+      y += 6;
+      doc.font("Helvetica-Bold").fontSize(8).fillColor("#2E5FA3")
+         .text(title.toUpperCase(), L, y, { characterSpacing: 0.8 });
+      y += 18;
+    }
+
+    // ── Row helper ────────────────────────────────────────────────────────────
+    function row(label, value) {
+      if (!value) return;
+      doc.font("Helvetica").fontSize(9).fillColor(LBL)
+         .text(label, L, y, { width: 150, continued: false });
+      doc.font("Helvetica").fontSize(9).fillColor("#1a1a2e")
+         .text(String(value), L + 155, y - 9, { width: R - L - 155 });
+      y += 16;
+    }
+
+    // ── Shipper Information ───────────────────────────────────────────────────
+    sectionTitle("Shipper Information");
+    row("Company",       body.company);
+    row("Address",       `${body.street_address}, ${body.city}, ${body.state} ${body.zip_code}`);
+    row("Contact",       body.contact_name);
+    row("Email",         body.email);
+    row("Phone",         body.phone);
+    if (body.fax)        row("Fax",          body.fax);
+    row("Shipping Hours", body.shipping_hours);
+    if (body.dock_bldg)  row("Dock / Bldg #", body.dock_bldg);
+    if (body.pickup_date) {
+      const [py, pm, pd] = body.pickup_date.split("-");
+      row("Pickup Ready Date", `${pm}/${pd}/${py}`);
+    }
+    y += 8;
+
+    // ── Container Details ─────────────────────────────────────────────────────
+    sectionTitle("Container Details");
+
+    // Table header
+    const cols = [
+      { label: "Qty",                   x: L,        w: 35  },
+      { label: "Capacity",              x: L + 35,   w: 65  },
+      { label: "Hazmat",                x: L + 100,  w: 55  },
+      { label: "Triple Rinsed",         x: L + 155,  w: 70  },
+      { label: "Product Last Contained",x: L + 225,  w: 155 },
+      { label: "Type",                  x: L + 380,  w: 80  },
+    ];
+    const rowH = 16;
+
+    doc.rect(L, y, R - L, rowH).fill(BLU);
+    cols.forEach((col) => {
+      doc.font("Helvetica-Bold").fontSize(7.5).fillColor("#ffffff")
+         .text(col.label, col.x + 3, y + 4, { width: col.w - 6, ellipsis: true });
+    });
+    y += rowH;
+
+    containers.forEach((c, idx) => {
+      if (y > doc.page.height - 80) {
+        doc.addPage();
+        y = 50;
+      }
+      const bg = idx % 2 === 0 ? "#f5f8ff" : "#ffffff";
+      doc.rect(L, y, R - L, rowH).fill(bg);
+      const vals = [c.qty, c.capacity, c.hazmat, c.rinsed, c.product, c.type];
+      cols.forEach((col, ci) => {
+        doc.font("Helvetica").fontSize(8).fillColor("#1a1a2e")
+           .text(vals[ci] || "", col.x + 3, y + 4, { width: col.w - 6, ellipsis: true });
+      });
+      y += rowH;
+    });
+    y += 14;
+
+    // ── Signature ─────────────────────────────────────────────────────────────
+    if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+    sectionTitle("Signature");
+    row("Signed by", body.signature);
+    if (body.sign_date) {
+      const [sy, sm, sd] = body.sign_date.split("-");
+      row("Date", `${sm}/${sd}/${sy}`);
+    }
+    y += 8;
+
+    // ── Notes ─────────────────────────────────────────────────────────────────
+    if (body.notes) {
+      if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+      sectionTitle("Notes");
+      doc.font("Helvetica").fontSize(9).fillColor("#374151")
+         .text(body.notes, L, y, { width: R - L, lineGap: 3 });
+      y = doc.y + 12;
+    }
+
+    // ── Footer ────────────────────────────────────────────────────────────────
+    doc.moveTo(L, doc.page.height - 40).lineTo(R, doc.page.height - 40)
+       .strokeColor("#e5eaf2").stroke();
+    doc.font("Helvetica").fontSize(7.5).fillColor(LBL)
+       .text(
+         `Submitted via mphunited.com/pick-up  |  ${new Date().toUTCString()}  |  Ref: ${ref_id}`,
+         L, doc.page.height - 32, { width: R - L, align: "center" }
+       );
+
+    doc.end();
+  });
+}
 
 // ── Allowed origins for CORS ─────────────────────────────────────────────────
 // Same-origin requests from the form itself don't need CORS at all.
@@ -154,15 +283,33 @@ async function handler(req, res) {
     </div>
   </body></html>`;
 
-  // ── Build attachments from photos ──────────────────────────────────────────
-  const attachments = Array.isArray(body.photos)
-    ? body.photos.map((p, i) => ({
-        content:     p.data,           // raw base64, no data: prefix
-        filename:    p.name || `photo-${i + 1}.jpg`,
-        type:        p.type || "image/jpeg",
-        disposition: "attachment",
-      }))
-    : [];
+  // ── Generate PDF attachment ───────────────────────────────────────────────
+  let pdfAttachment;
+  try {
+    const pdfBuffer = await generatePDF(body, containers, ref_id);
+    pdfAttachment = {
+      content:     pdfBuffer.toString("base64"),
+      filename:    `IBC-Pickup-Request-${ref_id}.pdf`,
+      type:        "application/pdf",
+      disposition: "attachment",
+    };
+  } catch (pdfErr) {
+    console.error("PDF generation error:", pdfErr.message);
+    // Non-fatal — email still sends without PDF if something goes wrong
+    pdfAttachment = null;
+  }
+
+  // ── Build attachments (PDF first, then photos) ────────────────────────────
+  const attachments = [];
+  if (pdfAttachment) attachments.push(pdfAttachment);
+  if (Array.isArray(body.photos)) {
+    body.photos.forEach((p, i) => attachments.push({
+      content:     p.data,           // raw base64, no data: prefix
+      filename:    p.name || `photo-${i + 1}.jpg`,
+      type:        p.type || "image/jpeg",
+      disposition: "attachment",
+    }));
+  }
 
   // ── Send email via SendGrid ─────────────────────────────────────────────────
   try {
