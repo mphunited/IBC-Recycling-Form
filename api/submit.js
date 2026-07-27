@@ -319,7 +319,7 @@ async function handler(req, res) {
       : [];
 
     const msg = {
-      to:       process.env.EMAIL_TO  || "matt@mphunited.com",
+      to:       process.env.EMAIL_TO  || "recycling@mphunited.com",
       from:     process.env.EMAIL_FROM,
       replyTo:  body.email,
       subject:  `[IBC Pickup Request] ${body.company} — ${ref_id}`,
