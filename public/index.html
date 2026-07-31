@@ -407,7 +407,6 @@
           <strong>Certification:</strong> By submitting this form, you hereby certify that these containers
           are <em>"RCRA empty"</em> according to 40 CFR 261.7(b)(1), but no more than 1 inch or 0.3% by weight, whichever is greater. An inch of material is typically around 7 gallons. Under rules of DOT, all IBC closures
           must be on the IBC cap, valve, and fittings. IBCs must be in reusable condition.
-          By signing below, you agree to the above and MPH United's standard program rules.
         </div>
 
         <div class="section-label">Signature</div>
@@ -419,6 +418,29 @@
           <div class="field">
             <label>Date <span class="req">*</span></label>
             <input type="date" name="sign_date" required/>
+          </div>
+        </div>
+        <p style="font-size:0.8rem;color:#374151;margin-top:10px;">By signing the below, you agree with the above and our standard program rules.</p>
+
+        <div class="grid grid-2" style="margin-top:16px;">
+          <div class="field span-2">
+            <label>How did you hear about recycling IBCs? <span class="opt">(optional)</span></label>
+            <select name="referral_source" id="referralSource">
+              <option value="">Select</option>
+              <option>Google Search</option>
+              <option>Jennifer Wilkes</option>
+              <option>Larry Mitchum</option>
+              <option>Mike Harding</option>
+              <option>Promotional Email</option>
+              <option>Renee Sauvageau</option>
+              <option>Social Media</option>
+              <option>Suzanne Ridenour</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field span-2" id="referralOtherField" style="display:none;">
+            <label>Please specify <span class="req">*</span></label>
+            <input type="text" name="referral_source_other" id="referralSourceOther" placeholder="Tell us how you heard about us"/>
           </div>
         </div>
 
@@ -528,6 +550,21 @@
   addRow();
   document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
 
+  // Show/hide "Other" free-text field for referral source
+  const referralSelect     = document.getElementById("referralSource");
+  const referralOtherField = document.getElementById("referralOtherField");
+  const referralOtherInput = document.getElementById("referralSourceOther");
+  referralSelect.addEventListener("change", function() {
+    if (this.value === "Other") {
+      referralOtherField.style.display = "flex";
+      referralOtherInput.required = true;
+    } else {
+      referralOtherField.style.display = "none";
+      referralOtherInput.required = false;
+      referralOtherInput.value = "";
+    }
+  });
+
   // ── Form submission via fetch ─────────────────────────────────────────────
   document.getElementById("ibcForm").addEventListener("submit", async function(e) {
     e.preventDefault();
@@ -558,6 +595,15 @@
     });
     if (containerError) {
       showError(containerError);
+      btn.disabled = false;
+      btn.textContent = "Submit Pickup Request";
+      return;
+    }
+
+    // Validate referral source (optional field — only required if "Other" is selected)
+    const referralVal = document.getElementById("referralSource").value;
+    if (referralVal === "Other" && !document.getElementById("referralSourceOther").value.trim()) {
+      showError("Please specify how you heard about recycling IBCs.");
       btn.disabled = false;
       btn.textContent = "Submit Pickup Request";
       return;
@@ -688,6 +734,8 @@
     rowCount = 0;
     addRow();
     document.querySelector('input[name="sign_date"]').value = new Date().toISOString().split("T")[0];
+    document.getElementById("referralOtherField").style.display = "none";
+    document.getElementById("referralSourceOther").required = false;
     document.getElementById("submitBtn").disabled = false;
     document.getElementById("submitBtn").textContent = "Submit Pickup Request";
     for (let s = 1; s <= 5; s++) {

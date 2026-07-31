@@ -115,6 +115,10 @@ function generatePDF(body, containers, ref_id) {
       const [sy, sm, sd] = body.sign_date.split("-");
       row("Date", `${sm}/${sd}/${sy}`);
     }
+    const referralDisplay = body.referral_source === "Other"
+      ? `Other — ${body.referral_source_other || ""}`
+      : body.referral_source;
+    row("How they heard about us", referralDisplay);
     y += 8;
 
     // ── Notes ─────────────────────────────────────────────────────────────────
@@ -196,6 +200,11 @@ async function handler(req, res) {
       error: `Missing required fields: ${missing.map((f) => f.replace(/_/g, " ")).join(", ")}`,
     });
   }
+  if (body.referral_source === "Other" && !body.referral_source_other?.trim()) {
+    return res.status(400).json({
+      error: "Please specify how you heard about recycling IBCs.",
+    });
+  }
 
   // ── Collect container rows ─────────────────────────────────────────────────
   const containers = [];
@@ -270,6 +279,7 @@ async function handler(req, res) {
       <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
         <tr><td style="padding:5px 0;color:#6b7280;width:180px;">Signed by</td><td style="padding:5px 0;font-weight:600;">${body.signature}</td></tr>
         <tr><td style="padding:5px 0;color:#6b7280;">Date</td><td style="padding:5px 0;">${body.sign_date ? (() => { const [y,m,d] = body.sign_date.split("-"); return `${m}/${d}/${y}`; })() : ""}</td></tr>
+        <tr><td style="padding:5px 0;color:#6b7280;">How they heard about us</td><td style="padding:5px 0;">${body.referral_source === "Other" ? `Other — ${body.referral_source_other || ""}` : (body.referral_source || "")}</td></tr>
       </table>
       ${body.notes ? `
       <h3 style="color:#C4962A;border-bottom:2px solid #E8D5A3;padding-bottom:6px;margin:22px 0 12px;font-size:0.85rem;letter-spacing:0.08em;text-transform:uppercase;">Notes</h3>
